@@ -11,4 +11,4 @@ The source code is found in the server.js file, relevant sql code can be found w
 
 ## Link to demo video
 
-TBD
+The demo video can be found here: https://drive.google.com/file/d/1VQdZpvDpKZ3S8TyijNAoGkezsJFplUcz/view?usp=share_link
