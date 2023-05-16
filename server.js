@@ -87,62 +87,64 @@ function viewAllemployees() {
 
 // Add Employee
 function addEmployee() {
-    const sql = `SELECT r.id, r.title, CONCAT(e.first_name, ' ', e.last_name) AS employee_name
-                FROM employee e
-                JOIN role r ON e.role_id = r.id`;
-    db.query(sql, (err, results) => {
+    const getRolesQuery = 'SELECT id, title FROM role';
+    const getEmployeeNamesQuery = 'SELECT id, CONCAT(first_name, " ", last_name) AS employee_name FROM employee';
+
+    db.query(getRolesQuery, (err, rolesResult) => {
         if (err) throw err;
-        const roles = results.map((row) => ({id: row.id, title: row.title}));
-        const employeeNames = results.map((row) => ({ id: row.id, name: row.employee_name }));
-        
-        employeeNames.unshift({ id: null, name: "None" });
 
-        inquirer.prompt([
-            {
-                type: 'input',
-                name: 'first_name',
-                message: "What is the employee`s first name?",
-            },
-            {
-                type: 'input',
-                name: 'last_name',
-                message: "What is the employee's last name?",
-            },
-            {
-                type: 'list',
-                name: 'role',
-                message: "What is the employee's role?",
-                choices: roles.map((role) => role.title),
-            },
-            {
-                type: 'list',
-                name: 'manager',
-                message: "Who is the employee's manager?",
-                choices: employeeNames.map((employee) => employee.name),
-            }
-        ])
-        .then((answer) => {
-            const role = roles.find((role) => role.title === answer.role);
-            const roleId = role ? role.id : null;
+        const roles = rolesResult.map((row) => ({ id: row.id, title: row.title }));
 
-            const manager = employeeNames.find((role) => role.name === answer.manager);
-            const managerId = manager ? manager.id : null;
+        db.query(getEmployeeNamesQuery, (err, namesResult) => {
+            if (err) throw err;
 
-            const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
+            const employeeNames = namesResult.map((row) => ({ id: row.id, name: row.employee_name }));
+
+            employeeNames.unshift({ id: null, name: "None" });
+
+            inquirer
+                .prompt([
+                    {
+                        type: 'input',
+                        name: 'first_name',
+                        message: "What is the employee's first name?",
+                    },
+                    {
+                        type: 'input',
+                        name: 'last_name',
+                        message: "What is the employee's last name?",
+                    },
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: "What is the employee's role?",
+                        choices: roles.map((role) => role.title),
+                    },
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: "Who is the employee's manager?",
+                        choices: employeeNames.map((employee) => employee.name),
+                    },
+                ])
+                .then((answer) => {
+                    const role = roles.find((role) => role.title === answer.role);
+                    const roleId = role ? role.id : null;
+
+                    const manager = employeeNames.find((employee) => employee.name === answer.manager);
+                    const managerId = manager ? manager.id : null;
+
+                    const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
                         VALUES (?, ?, ?, ?)`;
 
-            const params = [
-                answer.first_name,
-                answer.last_name,
-                roleId,
-                managerId
-            ];
+                    const params = [answer.first_name, answer.last_name, roleId, managerId];
 
-            db.query(sql, params, (err, res) => {
-                if (err) throw err;
-                console.log(`Added '${answer.first_name} ${answer.last_name}' to the database.`);
-                options();
-            });
+                    db.query(sql, params, (err, res) => {
+                        if (err) throw err;
+                        console.log(`Added '${answer.first_name} ${answer.last_name}' to the database.`);
+                        options();
+                    });
+                });
         });
     });
 }
